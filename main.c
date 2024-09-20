@@ -1,18 +1,17 @@
 #include <complex.h>
-#include <cstdio>
 #include <netinet/in.h>
 #include <stdio.h>
 #include <sys/socket.h>
 
-void setup_socket() {
+void setup_socket(int *server_socket) {
 
   struct sockaddr_in server_address;
 
   // AF_INET is the address family for IPv4
   // SOCK_STREAM for two way connection based byte streams
   // 0 is the protocol normally
-  int new_socket = socket(AF_INET, SOCK_STREAM, 0);
-  if (new_socket < 0) {
+  server_socket = socket(AF_INET, SOCK_STREAM, 0);
+  if (server_socket < 0) {
     // handle error
     perror("Error creating socket");
   }
@@ -37,9 +36,22 @@ void setup_socket() {
   }
 }
 
+void client_connection(int new_socket){
+  struct sockaddr_in client_address;
+  socklen_t client_connection_size = sizeof(client_address);
+  int client_connection_socket = accept(new_socket, (struct sockaddr *)& client_address, &client_connection_size);
+  if(client_connection_size < 0){
+      perror("Error doing the connection");
+  }
+
+}
+
+
 int main() {
 
-  setup_socket();
+    int* server_socket;
+
+    setup_socket(&server_socket);
 
   return 0;
 }
