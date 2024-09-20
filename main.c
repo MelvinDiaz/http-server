@@ -10,9 +10,9 @@ void setup_socket(int *server_socket) {
   // AF_INET is the address family for IPv4
   // SOCK_STREAM for two way connection based byte streams
   // 0 is the protocol normally
-  server_socket = socket(AF_INET, SOCK_STREAM, 0);
-  if (server_socket < 0) {
-    // handle error
+  int aux_socket = *server_socket;
+  aux_socket = socket(AF_INET, SOCK_STREAM, 0);
+  if (aux_socket < 0) {
     perror("Error creating socket");
   }
 
@@ -22,13 +22,14 @@ void setup_socket(int *server_socket) {
   // Bind to any ip address
   server_address.sin_addr.s_addr = INADDR_ANY;
 
-  int bind_status = bind(new_socket, (struct sockaddr *)&server_address,
+  int bind_status = bind(aux_socket, (struct sockaddr *)&server_address,
                          sizeof(server_address));
 
   if (bind_status < 0) {
     perror("Error binding socket");
   }
-  int listen_status = listen(new_socket, 5);
+
+  int listen_status = listen(aux_socket, 5);
   if (listen_status == 0) {
     printf("Listening on port 8080\n");
   } else {
@@ -36,22 +37,29 @@ void setup_socket(int *server_socket) {
   }
 }
 
-void client_connection(int new_socket){
+void client_connection(int *server_socket) {
   struct sockaddr_in client_address;
   socklen_t client_connection_size = sizeof(client_address);
-  int client_connection_socket = accept(new_socket, (struct sockaddr *)& client_address, &client_connection_size);
-  if(client_connection_size < 0){
-      perror("Error doing the connection");
+
+  // Accept the connection
+  // client socket will copy the type of socket from the server socket
+  // To accept the connection, the server socket must be binded and listening
+  int client_connection_socket =
+      accept(*server_socket, (struct sockaddr *)&client_address,
+             &client_connection_size);
+
+  if (client_connection_size < 0) {
+    perror("Error doing the connection");
   }
-
+  printf("Connection established\n");
 }
-
 
 int main() {
 
-    int* server_socket;
+  int server_socket;
 
-    setup_socket(&server_socket);
+  setup_socket(&server_socket);
+  client_connection(&server_socket);
 
   return 0;
 }
