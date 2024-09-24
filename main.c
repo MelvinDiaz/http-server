@@ -1,5 +1,6 @@
 #include <complex.h>
 #include <netinet/in.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <sys/socket.h>
 
@@ -37,21 +38,32 @@ void setup_socket(int *server_socket) {
   }
 }
 
+void *client_handler(void *args) {}
+
 void client_connection(int *server_socket) {
-  struct sockaddr_in client_address;
-  socklen_t client_connection_size = sizeof(client_address);
+  // Always being executed
+  while (1) {
+    struct sockaddr_in client_address;
+    socklen_t client_connection_size = sizeof(client_address);
 
-  // Accept the connection
-  // client socket will copy the type of socket from the server socket
-  // To accept the connection, the server socket must be binded and listening
-  int client_connection_socket =
-      accept(*server_socket, (struct sockaddr *)&client_address,
-             &client_connection_size);
+    // Accept the connection
+    // client socket will copy the type of socket from the server socket
+    // To accept the connection, the server socket must be binded and listening
+    int client_connection_socket =
+        accept(*server_socket, (struct sockaddr *)&client_address,
+               &client_connection_size);
 
-  if (client_connection_size < 0) {
-    perror("Error doing the connection");
+    if (client_connection_size < 0) {
+      perror("Error doing the connection");
+    }
+
+    pthread_t thread;
+    // client handler will be executed in a new thread
+    pthread_create(&thread, NULL, client_handler,
+                   (void *)&client_connection_socket);
+
+    pthread_detach(thread);
   }
-  printf("Connection established\n");
 }
 
 int main() {
@@ -59,6 +71,7 @@ int main() {
   int server_socket;
 
   setup_socket(&server_socket);
+
   client_connection(&server_socket);
 
   return 0;
